@@ -1,5 +1,5 @@
 const express = require('express')
-const { check, validationResult} = require('express-validator');
+const { check, validationResult } = require('express-validator');
 const User = require('../models/user');
 bcrypt = require('bcryptjs')
 jwt = require('jsonwebtoken')
@@ -10,10 +10,10 @@ user = require('../models/user')
 router.post(
     "/signup",
     [
-        check('username', 'Please Enter a Valid Username')
+        check("username", "please enter a valid username")
         .notEmpty(),
-        check('email', 'Please enter a valid email').isEmail(),
-        check('password', 'Please enter a valid password').isLength({
+        check("email", "please enter valid email").isEmail(),
+        check("password", "please enter valid password").isLength({
             min: 6
         })
     ],
@@ -30,10 +30,12 @@ router.post(
             email,
             password
         } = req.body;
+        
         try{
-            let user = await user.findOne({
+            let user = await User.findOne({
                 email
             });
+            
             if(user){
                 return res.status(400).json({
                     msg: 'User Already Exists'
@@ -46,7 +48,7 @@ router.post(
                 password
             });
 
-            const salt = await bcypt.genSalt(10);
+            const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
 
             await user.save();

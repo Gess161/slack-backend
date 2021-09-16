@@ -1,6 +1,5 @@
 const express = require('express');
-const bodyParser = require('body-parser')
-const User = require('./routes/user')
+const user = require('./routes/user')
 const InitiateMongoServer = require('./config/db')
 
 //Initiate MongoDB
@@ -14,7 +13,11 @@ const PORT = process.env.PORT || 4000;
 //middleware
 app.use(express.json())
 
-app.use('/user', User)
+app.get('/',(req, res) => {
+    res.json({ message: 'API Working'})
+})
+
+app.use('/user', user)
 
 app.listen(PORT, (req, res) => {
     console.log(`Server started at PORT ${PORT}`)
