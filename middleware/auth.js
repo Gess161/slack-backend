@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 module.exports = function(req,res,next) {
     const token = req.header("token");
-    if (!token) return res.status(400).json({ message: "Auth error"})
+    if (!token) return res.status(401).json({ message: "Auth error"})
 
     try {
         const decoded = jwt.verify(token, "randomString");
