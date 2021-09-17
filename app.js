@@ -1,6 +1,7 @@
 const express = require('express');
 const user = require('./routes/user')
 const InitiateMongoServer = require('./config/db')
+const cors = require('cors')
 
 //Initiate MongoDB
 InitiateMongoServer()
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 4000;
 
 //middleware
 app.use(express.json())
+app.use(cors())
 
 app.get('/',(req, res) => {
     res.json({ message: 'API Working'})
