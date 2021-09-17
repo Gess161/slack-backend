@@ -11,8 +11,6 @@ user = require('../models/user')
 router.post(
     "/signup",
     [
-        check("username", "please enter a valid username")
-            .notEmpty(),
         check("email", "please enter valid email").isEmail(),
         check("password", "please enter valid password").isLength({
             min: 6
@@ -27,7 +25,6 @@ router.post(
         }
 
         const {
-            username,
             email,
             password
         } = req.body;
@@ -44,7 +41,6 @@ router.post(
             }
 
             user = new User({
-                username,
                 email,
                 password
             });
