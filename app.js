@@ -1,26 +1,34 @@
 const express = require('express');
-const user = require('./routes/user')
 const InitiateMongoServer = require('./config/db')
 const cors = require('cors')
+const user = require('./routes/user')
+const Message = require('./models/message')
 
-//Initiate MongoDB
+
 InitiateMongoServer()
-
 const app = express()
-
-//My PORT (needs to be moved to EnvVariable?)
 const PORT = process.env.PORT || 4000;
 
-//middleware
+const io = require("socket.io")(4001, {
+    cors: {
+        origin: ['http://localhost:3000']
+    }
+});
+
+
 app.use(express.json())
 app.use(cors())
-
-app.get('/',(req, res) => {
-    res.json({ message: 'API Working'})
-})
-
 app.use('/user', user)
-
 app.listen(PORT, (req, res) => {
     console.log(`Server started at PORT ${PORT}`)
 })
+
+io.on('connection', (socket) => {
+    console.log('My socket id is', socket.id)
+    socket.on('message', (msg) => {
+        console.log(msg)
+        io.emit('send-message', msg)
+    });
+});
+
+

@@ -11,25 +11,25 @@ user = require('../models/user')
 router.post(
     "/signup",
     [
-        check("email", "please enter valid email").isEmail(),
-        check("password", "please enter valid password").isLength({
+        check("email", "Please enter valid email").isEmail(),
+        check("password", "Please enter valid password").isLength({
             min: 6
         })
     ],
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            const alert = errors.array()
+            console.log("siggin err", alert)
             return res.status(400).json({
-                errors: errors.array()
-            });
+                errorMessage: alert.msg
+            })
         }
 
         const {
             email,
             password
         } = req.body;
-        
-        console.log(req.body)
         try {
             let user = await User.findOne({
                 email
@@ -37,7 +37,7 @@ router.post(
 
             if (user) {
                 return res.status(400).json({
-                    msg: 'User Already Exists'
+                    errorMessage: 'User already exists'
                 });
             }
 
@@ -84,11 +84,12 @@ router.post("/login",
         })
     ],
     async (req, res) => {
-        const errors = validationResult(req);
-
+        console.log(validationResult(req))
+        const errors = validationResult(res);
+        console.log("login err", errors)
         if (!errors.isEmpty()) {
-            return res.status(400).jsom({
-                errors: errors.array()
+            return res.status(400).json({
+                errors: errors.array(),
             });
         }
 
