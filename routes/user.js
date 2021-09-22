@@ -8,8 +8,10 @@ auth = require('../middleware/auth')
 
 user = require('../models/user')
 
+
+
 router.post(
-    "/signup",
+    "/",
     [
         check("email", "Please enter valid email").isEmail(),
         check("password", "Please enter valid password").isLength({
@@ -17,12 +19,10 @@ router.post(
         })
     ],
     async (req, res) => {
-        const errors = validationResult(req);
+        const errors = validationResult(req)
         if (!errors.isEmpty()) {
-            const alert = errors.array()
-            console.log("siggin err", alert)
             return res.status(400).json({
-                errorMessage: alert.msg
+                errorMessage: errors.errors[0].msg
             })
         }
 
@@ -84,12 +84,10 @@ router.post("/login",
         })
     ],
     async (req, res) => {
-        console.log(validationResult(req))
-        const errors = validationResult(res);
-        console.log("login err", errors)
+        const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
-                errors: errors.array(),
+                errorMessage: errors.errors[0].msg
             });
         }
 
@@ -99,13 +97,13 @@ router.post("/login",
                 email
             });
             if (!user) return res.status(400).json({
-                message: "User not exist"
+                errorMessage: "User does not exist"
             });
 
             const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) return res.status(400).json({
-                message: "Incorrect password"
-            });
+            if (!isMatch) return res.status(204).send({
+                errorMessage: 'Password does not match'
+            })
 
             const payload = {
                 user: {
