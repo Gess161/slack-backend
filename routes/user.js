@@ -5,13 +5,9 @@ bcrypt = require('bcryptjs')
 jwt = require('jsonwebtoken')
 router = express.Router();
 auth = require('../middleware/auth')
-
 user = require('../models/user')
 
-
-
-router.post(
-    "/",
+router.post("/",
     [
         check("email", "Please enter valid email").isEmail(),
         check("password", "Please enter valid password").isLength({
@@ -25,38 +21,23 @@ router.post(
                 errorMessage: errors.errors[0].msg
             })
         }
-
-        const {
-            email,
-            password
-        } = req.body;
+        const { email, password } = req.body;
         try {
-            let user = await User.findOne({
-                email
-            });
-
+            let user = await User.findOne({ email });
             if (user) {
                 return res.status(400).json({
                     errorMessage: 'User already exists'
                 });
             }
-
-            user = new User({
-                email,
-                password
-            });
-
+            user = new User({ email, password });
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
-
             await user.save();
-
             const payload = {
                 user: {
                     id: user.id
                 }
             };
-
             jwt.sign(
                 payload,
                 'randomString', {
@@ -90,27 +71,24 @@ router.post("/login",
                 errorMessage: errors.errors[0].msg
             });
         }
-
         const { email, password } = req.body;
         try {
             let user = await User.findOne({
                 email
             });
+
             if (!user) return res.status(400).json({
                 errorMessage: "User does not exist"
             });
-
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) return res.status(204).send({
                 errorMessage: 'Password does not match'
             })
-
             const payload = {
                 user: {
                     id: user.id
                 }
             };
-
             jwt.sign(payload,
                 "randomString", {
                 expiresIn: 3600
