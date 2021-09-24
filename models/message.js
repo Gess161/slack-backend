@@ -6,6 +6,9 @@ const messageSchema = new mongoose.Schema({
     },
     message: { 
         type: String,
+    },
+    socketId: {
+        type: String,
     }
 }, {
     timestamps: true,
