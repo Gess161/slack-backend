@@ -7,7 +7,10 @@ const messageSchema = new mongoose.Schema({
     message: { 
         type: String,
     },
-    socketId: {
+    roomName: {
+        type: String,
+    },
+    roomId: {
         type: String,
     }
 }, {
