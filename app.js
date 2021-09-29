@@ -28,10 +28,16 @@ function deleteUser(socket) {
 }
 
 io.on('connection', (socket) => {
-    io.emit('room-added', rooms)
-    socket.on('add-room', (room) => {
+    socket.to(socket.id).emit('room-added', rooms)
+    socket.on('delete-room', room => {
+        const toDelete = rooms.findIndex(() => room)
+        rooms.splice(toDelete - 1, 1)
+        io.emit('room-deleted', rooms)
+        Message.deleteMany({ roomName: room});
+    })
+    socket.on('add-room', room => {
         rooms.push(room)
-        io.emit('room-added', rooms)
+        socket.broadcast.emit('room-added', rooms)
     })
     socket.on('join-room', async room => {
         socket.join(room)
