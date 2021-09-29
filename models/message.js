@@ -4,7 +4,7 @@ const messageSchema = new mongoose.Schema({
     user: {
         type: String
     },
-    message: { 
+    message: {
         type: String,
     },
     roomName: {
@@ -16,6 +16,6 @@ const messageSchema = new mongoose.Schema({
 }, {
     timestamps: true,
 });
- 
+
 const Message = mongoose.model("Message", messageSchema);
 module.exports = Message;

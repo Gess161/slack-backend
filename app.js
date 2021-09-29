@@ -1,22 +1,19 @@
 const express = require('express');
-const InitiateMongoServer = require('./config/db')
+const { InitiateMongoServer, mongoose } = require('./config/db')
 const cors = require('cors')
 const user = require('./routes/user')
 const Message = require('./models/message')
-const { client, PORT, WSPORT } = require('./constants/constants')
-
+const { CLIENT, PORT, WSPORT } = require('./constants/constants');
 InitiateMongoServer()
 
 const users = {}
 const rooms = []
-
 const app = express()
 const io = require("socket.io")(WSPORT, {
     cors: {
-        origin: client
+        origin: "http://localhost:3000",
     }
 });
-
 app.use(express.json())
 app.use(cors())
 app.use('/user', user)
@@ -35,16 +32,17 @@ io.on('connection', (socket) => {
     socket.on('add-room', (room) => {
         rooms.push(room)
         io.emit('room-added', rooms)
-        console.log(rooms)
     })
-    socket.on('join-room', room => {
+    socket.on('join-room', async room => {
         socket.join(room)
-        console.log(socket.id, 'joined the room', room)
+        const res = await Message.find({ roomName: room }).exec()
+        if (res === []) {
+            io.emit('room-joined', room)
+        } else io.emit('room-joined', res)
     })
     socket.on('user-log-in', (user, userSocket) => {
         users[user] = userSocket
         io.emit('users-connected', users, rooms)
-        console.log(users)
     })
     socket.on('message', (msg, user, roomName, roomId) => {
         const message = new Message({
@@ -54,10 +52,11 @@ io.on('connection', (socket) => {
             roomId: roomId
         })
         if (roomId === '') {
-            socket.broadcast.emit('get-message', message.message, message.user, message.socketId)
+            socket.broadcast.emit('get-message', message.message, message.user, message.roomName, message.roomId)
             message.save()
         } else {
-            socket.to(roomId).emit('get-message', message.message, message.user, message.socketId)
+            socket.to(roomId).emit('get-message', message.message, message.user, message.roomName, message.roomId)
+            message.save()
         }
     });
     socket.on('disconnect', () => {
