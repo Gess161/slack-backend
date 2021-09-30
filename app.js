@@ -38,9 +38,9 @@ io.on('connection', (socket) => {
         rooms.push(room)
         io.emit('room-added', rooms)
     })
-    socket.on('join-room', async room => {
+    socket.on('join-room', async (room, roomId) => {
         socket.join(room)
-        io.to(socket.id).emit('current-room', room)
+        io.to(socket.id).emit('current-room', room, roomId)
         const res = await Message.find({ roomName: room }).exec()
         if (res === []) {
             io.to(socket.id).emit('room-joined', room)
