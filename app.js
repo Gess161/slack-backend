@@ -27,13 +27,14 @@ function deleteUser(socket) {
     }
 }
 
+
 io.on('connection', (socket) => {
-    socket.to(socket.id).emit('room-added', rooms)
+    io.to(socket.id).emit('initial-rooms', rooms)
     socket.on('delete-room', room => {
         const toDelete = rooms.findIndex(() => room)
         rooms.splice(toDelete - 1, 1)
         io.emit('room-deleted', rooms)
-        Message.deleteMany({ roomName: room});
+        Message.deleteMany({ roomName: room });
     })
     socket.on('add-room', room => {
         rooms.push(room)
@@ -41,10 +42,11 @@ io.on('connection', (socket) => {
     })
     socket.on('join-room', async room => {
         socket.join(room)
+        io.to(socket.id).emit('current-room', room)
         const res = await Message.find({ roomName: room }).exec()
         if (res === []) {
-            io.emit('room-joined', room)
-        } else io.emit('room-joined', res)
+            io.to(socket.id).emit('room-joined', room)
+        } else io.to(socket.id).emit('room-joined', res)
     })
     socket.on('user-log-in', (user, userSocket) => {
         users[user] = userSocket
