@@ -27,18 +27,16 @@ function deleteUser(socket) {
     }
 }
 
-
 io.on('connection', (socket) => {
-    io.to(socket.id).emit('initial-rooms', rooms)
     socket.on('delete-room', room => {
-        const toDelete = rooms.findIndex(() => room)
-        rooms.splice(toDelete - 1, 1)
+        const index = rooms.findIndex(room => room)
+        rooms.splice(index, 1)
         io.emit('room-deleted', rooms)
         Message.deleteMany({ roomName: room });
     })
     socket.on('add-room', room => {
         rooms.push(room)
-        socket.broadcast.emit('room-added', rooms)
+        io.emit('room-added', rooms)
     })
     socket.on('join-room', async room => {
         socket.join(room)
@@ -50,6 +48,7 @@ io.on('connection', (socket) => {
     })
     socket.on('user-log-in', (user, userSocket) => {
         users[user] = userSocket
+        io.to(socket.id).emit('initial-rooms', rooms)
         io.emit('users-connected', users, rooms)
     })
     socket.on('message', (msg, user, roomName, roomId) => {
