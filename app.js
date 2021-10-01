@@ -28,8 +28,6 @@ function deleteUser(socket) {
 }
 
 io.on('connection', (socket) => {
-    
-
     socket.on('delete-room', room => {
         const toDelete = rooms.findIndex(() => room)
         rooms.splice(toDelete - 1, 1)
@@ -64,8 +62,8 @@ io.on('connection', (socket) => {
             roomName: roomName,
             roomId: roomId
         })
-        if (roomId === '') {
-            socket.broadcast.emit('get-message', message.message, message.user, message.roomName, message.roomId)
+        if (roomName === 'General') {
+            io.emit('get-message', message.message, message.user, message.roomName, message.roomId)
             message.save()
         } else {
             socket.to(roomId).emit('get-message', message.message, message.user, message.roomName, message.roomId)
@@ -73,11 +71,20 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('private-message', ({ recipient, recipientName, sender, senderName, msg }) => {
+        const message = new Message({
+            user: senderName,
+            message: msg,
+            roomName: recipientName,
+            roomId: recipient
+        })
+        io.to([recipient, sender]).emit("get-private", { msg, recipient, sender, recipientName, senderName })
+        message.save()
+    })
     socket.on('disconnect', () => {
         deleteUser(socket.id)
         io.emit('user-disconnected', users)
     })
-
 });
 
 
