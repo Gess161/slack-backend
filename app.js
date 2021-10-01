@@ -28,29 +28,35 @@ function deleteUser(socket) {
 }
 
 io.on('connection', (socket) => {
+    
+
     socket.on('delete-room', room => {
-        const index = rooms.findIndex(room => room)
-        rooms.splice(index, 1)
+        const toDelete = rooms.findIndex(() => room)
+        rooms.splice(toDelete - 1, 1)
         io.emit('room-deleted', rooms)
         Message.deleteMany({ roomName: room });
     })
+
     socket.on('add-room', room => {
         rooms.push(room)
         io.emit('room-added', rooms)
+        console.log(rooms)
     })
-    socket.on('join-room', async (room, roomId) => {
-        socket.join(room)
-        io.to(socket.id).emit('current-room', room, roomId)
+
+    socket.on('join-room', async room => {
+        socket.join(room);
         const res = await Message.find({ roomName: room }).exec()
         if (res === []) {
-            io.to(socket.id).emit('room-joined', room)
-        } else io.to(socket.id).emit('room-joined', res)
+            io.emit('room-joined', room);
+        } else io.emit('room-joined', res);
     })
+
     socket.on('user-log-in', (user, userSocket) => {
-        users[user] = userSocket
-        io.to(socket.id).emit('initial-rooms', rooms)
-        io.emit('users-connected', users, rooms)
+        users[user] = userSocket;
+        io.emit('users-connected', users, rooms);
+        io.to(socket.id).emit('room-added', rooms);
     })
+
     socket.on('message', (msg, user, roomName, roomId) => {
         const message = new Message({
             user: user,
@@ -66,10 +72,12 @@ io.on('connection', (socket) => {
             message.save()
         }
     });
+
     socket.on('disconnect', () => {
         deleteUser(socket.id)
         io.emit('user-disconnected', users)
     })
+
 });
 
 
