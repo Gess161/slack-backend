@@ -38,21 +38,23 @@ io.on('connection', (socket) => {
     socket.on('add-room', room => {
         rooms.push(room)
         io.emit('room-added', rooms)
-        console.log(rooms)
+        console.log('rooms are:', rooms)
     })
 
-    socket.on('join-room', async room => {
-        socket.join(room);
+    socket.on('join-room', async ({ room, roomId }) => {
+        socket.join(roomId);
+        console.log(socket.id, "joined room", roomId)
         const res = await Message.find({ roomName: room }).exec()
         if (res === []) {
-            io.emit('room-joined', room);
-        } else io.emit('room-joined', res);
+            io.to(socket.id).emit('room-joined', room);
+        } else io.to(socket.id).emit('room-joined', res);
     })
 
-    socket.on('user-log-in', (user, userSocket) => {
-        users[user] = userSocket;
+    socket.on('user-log-in', (user) => {
+        users[user] = socket.id;
         io.emit('users-connected', users, rooms);
-        io.to(socket.id).emit('room-added', rooms);
+        io.emit('room-added', rooms);
+        console.log('users: ', users)
     })
 
     socket.on('message', (msg, user, roomName, roomId) => {
@@ -66,7 +68,7 @@ io.on('connection', (socket) => {
             io.emit('get-message', message.message, message.user, message.roomName, message.roomId)
             message.save()
         } else {
-            socket.to(roomId).emit('get-message', message.message, message.user, message.roomName, message.roomId)
+            io.to(roomId).emit('get-message', message.message, message.user, message.roomName, message.roomId)
             message.save()
         }
     });
@@ -78,9 +80,11 @@ io.on('connection', (socket) => {
             roomName: recipientName,
             roomId: recipient
         })
-        io.to([recipient, sender]).emit("get-private", { msg, recipient, sender, recipientName, senderName })
+        console.log(recipient)
+        io.to(recipient).emit("get-private", { msg, recipient, sender, recipientName, senderName })
         message.save()
     })
+
     socket.on('disconnect', () => {
         deleteUser(socket.id)
         io.emit('user-disconnected', users)
