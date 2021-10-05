@@ -1,5 +1,5 @@
 const express = require('express');
-const { InitiateMongoServer, mongoose } = require('./config/db')
+const { InitiateMongoServer} = require('./config/db')
 const cors = require('cors')
 const user = require('./routes/user')
 const Message = require('./models/message')
@@ -54,7 +54,7 @@ io.on('connection', (socket) => {
         users[user] = socket.id;
         io.emit('users-connected', users, rooms);
         io.emit('room-added', rooms);
-        console.log('users: ', users)
+        console.log('users: ', users) 
     })
 
     socket.on('message', (msg, user, roomName, roomId) => {
@@ -64,7 +64,7 @@ io.on('connection', (socket) => {
             roomName: roomName,
             roomId: roomId
         })
-        if (roomName === 'General') {
+        if (roomName === 'general') {
             io.emit('get-message', message.message, message.user, message.roomName, message.roomId)
             message.save()
         } else {
