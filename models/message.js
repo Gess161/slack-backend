@@ -1,16 +1,19 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-    user: {
+    sender: {
         type: String
+    },
+    senderName: {
+        type: String,
     },
     message: {
         type: String,
     },
-    roomName: {
+    recipientName: {
         type: String,
     },
-    roomId: {
+    recipient: {
         type: String,
     }
 }, {

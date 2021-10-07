@@ -1,5 +1,5 @@
 const express = require('express');
-const { InitiateMongoServer} = require('./config/db')
+const { InitiateMongoServer } = require('./config/db')
 const cors = require('cors')
 const user = require('./routes/user')
 const Message = require('./models/message')
@@ -38,51 +38,59 @@ io.on('connection', (socket) => {
     socket.on('add-room', room => {
         rooms.push(room)
         io.emit('room-added', rooms)
-        console.log('rooms are:', rooms)
     })
 
-    socket.on('join-room', async ({ room, roomId }) => {
+    socket.on('join-room', async ({ user, room, roomId }) => {
         socket.join(roomId);
-        console.log(socket.id, "joined room", roomId)
-        const res = await Message.find({ roomName: room }).exec()
-        if (res === []) {
-            io.to(socket.id).emit('room-joined', room);
-        } else io.to(socket.id).emit('room-joined', res);
+        if (room !== roomId) {
+            const recieved = await Message.find({ recipientName: room }).exec()
+            const sent = await Message.find({ recipientName: user }).exec()
+            const res = recieved.concat(sent).sort((x,y) => {
+                return x.createdAt - y.createdAt
+            })
+            socket.emit('room-joined', res) 
+        } else {
+            const res = await Message.find({ recipientName: room }).exec()
+            socket.emit('room-joined', res);
+        }
     })
 
-    socket.on('user-log-in', (user) => {
+    socket.on('user-log-in', async (user) => {
         users[user] = socket.id;
         io.emit('users-connected', users, rooms);
         io.emit('room-added', rooms);
-        console.log('users: ', users) 
+        socket.join("general");
+        const res = await Message.find({ recipientName: 'general' }).exec()
+        io.to(socket.id).emit('room-joined', res)
     })
 
-    socket.on('message', (msg, user, roomName, roomId) => {
-        const message = new Message({
-            user: user,
-            message: msg,
-            roomName: roomName,
-            roomId: roomId
+    socket.on('message', ({ sender, senderName, message, recipientName, recipient }) => {
+        const msg = new Message({
+            sender: sender,
+            senderName: senderName,
+            message: message,
+            recipientName: recipientName,
+            recipient: recipient
         })
-        if (roomName === 'general') {
-            io.emit('get-message', message.message, message.user, message.roomName, message.roomId)
-            message.save()
+        if (recipientName === 'general') {
+            io.emit('get-message', msg)
+            msg.save()
         } else {
-            io.to(roomId).emit('get-message', message.message, message.user, message.roomName, message.roomId)
-            message.save()
+            io.to(recipient).emit('get-message', msg)
+            msg.save()
         }
     });
 
-    socket.on('private-message', ({ recipient, recipientName, sender, senderName, msg }) => {
-        const message = new Message({
-            user: senderName,
-            message: msg,
-            roomName: recipientName,
-            roomId: recipient
+    socket.on('private-message', ({ recipient, recipientName, sender, senderName, message }) => {
+        const msg = new Message({
+            sender: sender,
+            senderName: senderName,
+            message: message,
+            recipientName: recipientName,
+            recipient: recipient
         })
-        console.log(recipient)
-        io.to(recipient).emit("get-private", { msg, recipient, sender, recipientName, senderName })
-        message.save()
+        io.to(recipient).emit("get-private", msg)
+        msg.save()
     })
 
     socket.on('disconnect', () => {
