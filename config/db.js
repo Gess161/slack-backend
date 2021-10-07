@@ -6,7 +6,7 @@ const InitiateMongoServer = async () => {
         await mongoose.connect(MONGOURI)
         console.log('Connected to DB')
     } catch (e) {
-        console.log(e)
+        console.error(e)
         throw (e)
     }
 };
