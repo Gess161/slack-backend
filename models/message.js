@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const moment = require('moment-timezone');
+const dateKyiv = moment.tz("Europe/Kiev").format()
 
 const messageSchema = new mongoose.Schema({
     sender: {
@@ -15,10 +17,14 @@ const messageSchema = new mongoose.Schema({
     },
     recipient: {
         type: String,
+    },
+    time: {
+        type: String,
+        default: () => dateKyiv,
+
     }
-}, {
-    timestamps: true,
 });
 
+console.log(dateKyiv)
 const Message = mongoose.model("Message", messageSchema);
 module.exports = Message;

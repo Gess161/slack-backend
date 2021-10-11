@@ -33,6 +33,7 @@ io.on('connection', (socket) => {
     // ROOMS
     socket.on('add-room', room => {
         rooms.push(room)
+        socket.join(room);
         io.emit('room-added', rooms)
     })
     socket.on('join-room', async ({ user, room, roomId }) => {
@@ -59,13 +60,8 @@ io.on('connection', (socket) => {
             recipientName: recipientName,
             recipient: recipient
         })
-        if (recipientName === 'general') {
-            io.emit('get-message', msg)
-            msg.save()
-        } else {
-            io.to(recipient).emit('get-message', msg)
-            msg.save()
-        }
+        io.to(recipient).emit('get-message', msg)
+        msg.save()
     });
     socket.on('private-message', ({ recipient, recipientName, sender, senderName, message }) => {
         const msg = new Message({
