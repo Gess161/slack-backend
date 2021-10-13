@@ -7,6 +7,10 @@ const UserSchema = mongoose.Schema ({
     email: {
         type: String,
     },
+    image: {
+        data: Buffer,
+        contentType: String
+    }
 })
 
 const User = mongoose.model('users', UserSchema)

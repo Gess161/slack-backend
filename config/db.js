@@ -11,4 +11,4 @@ const InitiateMongoServer = async () => {
     }
 };
 
-module.exports = { InitiateMongoServer, mongoose }
+module.exports = { InitiateMongoServer, mongoose, MONGOURI}
