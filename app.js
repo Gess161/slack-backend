@@ -29,7 +29,6 @@ function deleteUser(socket) {
 }
 
 io.on('connection', (socket) => {
-
     // ROOMS
     socket.on('add-room', room => {
         rooms.push(room)

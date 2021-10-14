@@ -1,11 +1,16 @@
 const express = require('express')
 const { check, validationResult } = require('express-validator');
 const User = require('../models/user');
+const uploadController = require("../controllers/upload")
 bcrypt = require('bcryptjs')
 jwt = require('jsonwebtoken')
 router = express.Router();
 auth = require('../middleware/auth')
 user = require('../models/user')
+const imgModel = require("../models/image")
+const upload = require("../middleware/upload")
+const fs = require("fs")
+const path = require("path")
 
 router.post("/",
     [
@@ -56,7 +61,6 @@ router.post("/",
         }
     }
 );
-
 router.post("/login",
     [
         check("email", "Please enter a valid email").isEmail(),
@@ -108,7 +112,21 @@ router.post("/login",
         }
     }
 );
-
+router.post("/upload", upload.single('image'), (req, res, next) => {
+    let obj = {
+        img: req.file.path
+    }
+    imgModel.create(obj, async (err, item) => {
+        if (err) {
+            console.log("error", err);
+        }
+        else {
+            // const user = await User.findById(req.user.id)
+            item.save()
+            res.redirect('/chat')
+        }
+    })
+})
 router.get("/me", auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);

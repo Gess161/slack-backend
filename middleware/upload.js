@@ -1,21 +1,12 @@
-const util = require("util");
-const multer = require("multer");
-const GridFsStorage = require("multer-gridfs-storage");
-const MONGOURI = require("../config/db")
+const multer = require("multer")
 
-
-const storage = new GridFsStorage({
-    url: MONGOURI,
-    options: {useNewUrlParser: true, useUnifinedTopology: true},
-    file: (req, file) => {
-        const match = ["image/png", "image/jpeg"];
-
-        if(match.indexOf(file.mimetype) === -1) {
-            const filename = `${Date.now()}-Hlack-${file.originalname}`
-        };
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads")
+    },
+    filename: (req, file, cb) => {
+        cb(null, "hlack" + "-" + Date.now() + ".png")
     }
 });
-
-const uploadFile = multer({storage: storage}).single("file");
-const uploadFilesMiddleware = util.promisify(uploadFile);
-module.exports = uploadFilesMiddleware;
+const upload =  multer({ storage: storage });
+module.exports = upload;
