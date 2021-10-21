@@ -7,10 +7,7 @@ jwt = require('jsonwebtoken')
 router = express.Router();
 auth = require('../middleware/auth')
 user = require('../models/user')
-const imgModel = require("../models/image")
 const upload = require("../middleware/upload")
-const fs = require("fs")
-const path = require("path")
 
 router.post("/",
     [
@@ -26,7 +23,7 @@ router.post("/",
                 errorMessage: errors.errors[0].msg
             })
         }
-        const { email, password } = req.body;
+        const { email, password, username, image } = req.body;
         try {
             let user = await User.findOne({ email });
             if (user) {
@@ -34,7 +31,7 @@ router.post("/",
                     errorMessage: 'User already exists'
                 });
             }
-            user = new User({ email, password });
+            user = new User({ email, password, username, image });
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
             await user.save();
@@ -112,20 +109,17 @@ router.post("/login",
         }
     }
 );
-router.post("/upload", upload.single('image'), (req, res, next) => {
-    let obj = {
+router.post("/upload", upload.single('image'), async (req, res, next) => {
+    const data = {
+        previousname: req.body.previousname,
+        email: req.body.email,
+        user: req.body.username,
         img: req.file.path
     }
-    imgModel.create(obj, async (err, item) => {
-        if (err) {
-            console.log("error", err);
-        }
-        else {
-            // const user = await User.findById(req.user.id)
-            item.save()
-            res.redirect('/chat')
-        }
-    })
+    const res2 = await User.updateMany({ username: data.previousname }, { username: data.user });
+    // User.updateMany({ senderName: data.previousname}, { senderName: data.user});
+    // User.updateMany({ recipientName: data.previousname}, { recipientName: data.user});
+
 })
 router.get("/me", auth, async (req, res) => {
     try {
