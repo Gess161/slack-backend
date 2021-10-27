@@ -3,6 +3,9 @@ const moment = require('moment-timezone');
 const dateKyiv = () => moment.tz("Europe/Kiev").format()
 
 const messageSchema = new mongoose.Schema({
+    image: {
+        type: String
+    },
     sender: {
         type: String
     },

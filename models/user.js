@@ -12,6 +12,7 @@ const UserSchema = mongoose.Schema({
     },
     image: {
         type: String,
+        default: "uploads\\profile-image.svg"
     }
 })
 

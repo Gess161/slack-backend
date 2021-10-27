@@ -18,6 +18,9 @@ const io = require("socket.io")(WSPORT, {
 app.use(express.json())
 app.use(cors())
 app.use('/user', user)
+app.use('/uploads', function(req, res){
+    res.sendFile(__dirname + req.originalUrl);
+});
 app.listen(PORT, (req, res) => {
     console.log(`Server started at PORT ${PORT}`)
 })
@@ -51,8 +54,9 @@ io.on('connection', (socket) => {
     })
 
     //MESSAGES
-    socket.on('message', ({ sender, senderName, message, recipientName, recipient }) => {
+    socket.on('message', ({ image, sender, senderName, message, recipientName, recipient }) => {
         const msg = new Message({
+            image: image,
             sender: sender,
             senderName: senderName,
             message: message,
@@ -62,8 +66,9 @@ io.on('connection', (socket) => {
         io.to(recipient).emit('get-message', msg)
         msg.save()
     });
-    socket.on('private-message', ({ recipient, recipientName, sender, senderName, message }) => {
+    socket.on('private-message', ({ image, recipient, recipientName, sender, senderName, message }) => {
         const msg = new Message({
+            image: image,
             sender: sender,
             senderName: senderName,
             message: message,
