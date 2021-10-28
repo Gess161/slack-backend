@@ -2,13 +2,13 @@ const express = require('express')
 const { body, check, validationResult } = require('express-validator');
 const User = require('../models/user');
 const Message = require('../models/message')
-const uploadController = require("../controllers/upload")
+const upload = require("../middleware/upload")
 bcrypt = require('bcryptjs')
 jwt = require('jsonwebtoken')
 router = express.Router();
 auth = require('../middleware/auth')
 user = require('../models/user')
-const upload = require("../middleware/upload")
+
 
 router.post("/",
     [
@@ -26,7 +26,7 @@ router.post("/",
         }
         const { email, password, username, image } = req.body;
         try {
-            let user = await User.findOne({ email });
+            const user = await User.findOne({ email });
             if (user) {
                 return res.status(400).json({
                     errorMessage: 'User already exists'
@@ -112,14 +112,22 @@ router.post("/login",
 );
 router.post("/upload", upload.single('image'),
     body("email", "Please enter valid email").isEmail(),
-    async (req, res, next) => {
+    async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
                 errorMessage: errors.errors[0].msg
             });
         }
-        const { email, password, user, previousName, confirmPassword, newPassword } = req.body;
+        const {
+            active,
+            email,
+            password,
+            user,
+            previousName,
+            confirmPassword,
+            newPassword } = req.body;
+
         const data = req.file !== undefined ? {
             previousname: previousName,
             email: email,
@@ -131,41 +139,40 @@ router.post("/upload", upload.single('image'),
             user: user,
             img: "uploads\\profile-image.svg"
         };
-        try {
-            if (password && confirmPassword && newPassword) {
-                const username = await User.findOne({
-                    email
+        if (active) {
+            try {
+                if (password && confirmPassword && newPassword) {
+                    const username = await User.findOne({ email });
+                    if (password.length < 6 && newPassword.length < 6 && confirmPassword.length < 6) {
+                        return res.status(400).json({
+                            errorMessage: "Password must be at least 6 characters long"
+                        })
+                    }
+                    if (req.body.newPassword !== req.body.confirmPassword) {
+                        return res.status(400).json({
+                            errorMessage: "Passwords do not match"
+                        })
+                    }
+                    const isMatch = await bcrypt.compare(password, username.password);
+                    if (!isMatch) {
+                        return res.status(204).send({
+                            errorMessage: 'You entered wrong password'
+                        })
+                    }
+                } else {
+                    return res.status(400).json({
+                        errorMessage: "Please enter valid password"
+                    })
+                };
+                const salt = await bcrypt.genSalt(10);
+                data["password"] = await bcrypt.hash(newPassword, salt);
+            } catch (e) {
+                console.error(e);
+                res.status(500).json({
+                    errorMessage: "Server error"
                 });
-                if (password.length < 6 && newPassword.length < 6 && confirmPassword.length < 6) {
-                    return res.status(400).json({
-                        errorMessage: "Password must be at least 6 characters long"
-                    })
-                }
-                if (req.body.newPassword !== req.body.confirmPassword) {
-                    return res.status(400).json({
-                        errorMessage: "Passwords do not match"
-                    })
-                }
-                const isMatch = await bcrypt.compare(password, username.password);
-                console.log(isMatch)
-                if (!isMatch) {
-                    return res.status(204).send({
-                        errorMessage: 'You entered wrong password'
-                    })
-                }
-            } else {
-                return res.status(400).json({
-                    errorMessage: "Please enter valid password"
-                })
-            }
-            const salt = await bcrypt.genSalt(10);
-            data["password"] = await bcrypt.hash(newPassword, salt);
-        } catch (e) {
-            console.error(e);
-            res.status(500).json({
-                errorMessage: "Server error"
-            });
-        };
+            };
+        }
         const updatedUser = await User.updateMany({ username: data.previousname }, { passd: data.password, image: data.img, username: data.user, email: req.body.email });
         const sent = await Message.updateMany({ senderName: data.previousname }, { senderName: data.user });
         const recieved = await Message.updateMany({ recipientName: data.previousname }, { recipientName: data.user });
