@@ -84,7 +84,8 @@ io.on('connection', (socket) => {
         users[user] = socket.id;
         socket.join("general");
         io.emit('users-connected', users, rooms);
-        io.emit('room-added', rooms);
+        console.log(rooms)
+        io.emit('initial-rooms', rooms);
         const res = await Message.find({ recipientName: 'general' }).exec()
         io.to(socket.id).emit('room-joined', res)
     })

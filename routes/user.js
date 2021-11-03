@@ -2,7 +2,7 @@ const express = require('express')
 const { body, check, validationResult } = require('express-validator');
 const User = require('../models/user');
 const Message = require('../models/message')
-const upload = require("../middleware/upload")
+const upload = require("../middleware/upload");
 bcrypt = require('bcryptjs')
 jwt = require('jsonwebtoken')
 router = express.Router();
@@ -10,7 +10,7 @@ auth = require('../middleware/auth')
 user = require('../models/user')
 
 
-router.post("/",
+router.post("/signup",
     [
         check("email", "Please enter valid email").isEmail(),
         check("password", "Please enter valid password").isLength({
@@ -19,6 +19,7 @@ router.post("/",
     ],
     async (req, res) => {
         const errors = validationResult(req)
+        console.log(errors)
         if (!errors.isEmpty()) {
             return res.status(400).json({
                 errorMessage: errors.errors[0].msg
@@ -26,13 +27,13 @@ router.post("/",
         }
         const { email, password, username, image } = req.body;
         try {
-            const user = await User.findOne({ email });
+            let user = await User.findOne({ email });
             if (user) {
                 return res.status(400).json({
                     errorMessage: 'User already exists'
                 });
             }
-            user = new User({ email, password, username, image });
+            user = new User ({ email, password, username, image });
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
             await user.save();
@@ -68,6 +69,7 @@ router.post("/login",
     ],
     async (req, res) => {
         const errors = validationResult(req);
+        console.log(errors)
         if (!errors.isEmpty()) {
             return res.status(400).json({
                 errorMessage: errors.errors[0].msg
@@ -112,6 +114,9 @@ router.post("/login",
 );
 router.post("/upload", upload.single('image'),
     body("email", "Please enter valid email").isEmail(),
+    body("password", "Please enter a valid password").optional({ checkFalsy: true }).isLength({
+        min: 6
+    }),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -139,40 +144,40 @@ router.post("/upload", upload.single('image'),
             user: user,
             img: "uploads\\profile-image.svg"
         };
-        if (active) {
-            try {
-                if (password && confirmPassword && newPassword) {
-                    const username = await User.findOne({ email });
-                    if (password.length < 6 && newPassword.length < 6 && confirmPassword.length < 6) {
-                        return res.status(400).json({
-                            errorMessage: "Password must be at least 6 characters long"
-                        })
-                    }
-                    if (req.body.newPassword !== req.body.confirmPassword) {
-                        return res.status(400).json({
-                            errorMessage: "Passwords do not match"
-                        })
-                    }
-                    const isMatch = await bcrypt.compare(password, username.password);
-                    if (!isMatch) {
-                        return res.status(204).send({
-                            errorMessage: 'You entered wrong password'
-                        })
-                    }
-                } else {
-                    return res.status(400).json({
-                        errorMessage: "Please enter valid password"
-                    })
-                };
-                const salt = await bcrypt.genSalt(10);
-                data["password"] = await bcrypt.hash(newPassword, salt);
-            } catch (e) {
-                console.error(e);
-                res.status(500).json({
-                    errorMessage: "Server error"
-                });
-            };
-        }
+        // if (active === true) {
+        //     try {
+        //         if (password && confirmPassword && newPassword) {
+        //             const username = await User.findOne({ email });
+        //             if (password.length < 6 && newPassword.length < 6 && confirmPassword.length < 6) {
+        //                 return res.status(400).json({
+        //                     errorMessage: "Password must be at least 6 characters long"
+        //                 })
+        //             }
+        //             if (req.body.newPassword !== req.body.confirmPassword) {
+        //                 return res.status(400).json({
+        //                     errorMessage: "Passwords do not match"
+        //                 })
+        //             }
+        //             const isMatch = await bcrypt.compare(password, username.password);
+        //             if (!isMatch) {
+        //                 return res.status(204).send({
+        //                     errorMessage: 'You entered wrong password'
+        //                 })
+        //             }
+        //         } else {
+        //             return res.status(400).json({
+        //                 errorMessage: "Please enter valid password"
+        //             })
+        //         };
+        //         const salt = await bcrypt.genSalt(10);
+        //         data["password"] = await bcrypt.hash(newPassword, salt);
+        //     } catch (e) {
+        //         console.error(e);
+        //         res.status(500).json({
+        //             errorMessage: "Server error"
+        //         });
+        //     };
+        // }
         const updatedUser = await User.updateMany({ username: data.previousname }, { passd: data.password, image: data.img, username: data.user, email: req.body.email });
         const sent = await Message.updateMany({ senderName: data.previousname }, { senderName: data.user });
         const recieved = await Message.updateMany({ recipientName: data.previousname }, { recipientName: data.user });
