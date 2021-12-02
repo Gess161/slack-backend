@@ -18,7 +18,7 @@ const io = require("socket.io")(WSPORT, {
 app.use(express.json())
 app.use(cors())
 app.use('/user', user)
-app.use('/uploads', function(req, res){
+app.use('/uploads', function (req, res) {
     res.sendFile(__dirname + req.originalUrl);
 });
 app.listen(PORT, (req, res) => {
@@ -82,10 +82,12 @@ io.on('connection', (socket) => {
     //CONNECTION
     socket.on('user-log-in', async (user) => {
         users[user] = socket.id;
-        socket.join("general");
         io.emit('users-connected', users, rooms);
-        console.log(rooms)
         io.to(socket.id).emit('initial-rooms', rooms);
+        for (let i = 0; i < rooms.length; i++) {
+            socket.join(rooms[i])
+        }
+        socket.join("general");
         const res = await Message.find({ recipientName: 'general' }).exec()
         io.to(socket.id).emit('room-joined', res)
     })
