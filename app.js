@@ -4,6 +4,7 @@ const cors = require('cors')
 const user = require('./routes/user')
 const Message = require('./models/message')
 const { CLIENT, PORT, WSPORT } = require('./constants/constants');
+
 InitiateMongoServer()
 
 const users = {}
@@ -32,6 +33,7 @@ function deleteUser(socket) {
 }
 
 io.on('connection', (socket) => {
+
     // ROOMS
     socket.on('add-room', room => {
         rooms.push(room)
@@ -47,9 +49,11 @@ io.on('connection', (socket) => {
                 return x.createdAt - y.createdAt
             })
             socket.emit('room-joined', res)
+            socket.emit('current-room', {room, roomId})
         } else {
             const res = await Message.find({ recipientName: room }).exec()
             socket.emit('room-joined', res);
+            socket.emit('current-room', {room, roomId})
         }
     })
 
@@ -81,13 +85,10 @@ io.on('connection', (socket) => {
 
     //CONNECTION
     socket.on('user-log-in', async (user) => {
+        socket.join("general");
         users[user] = socket.id;
         io.emit('users-connected', users, rooms);
         io.to(socket.id).emit('initial-rooms', rooms);
-        for (let i = 0; i < rooms.length; i++) {
-            socket.join(rooms[i])
-        }
-        socket.join("general");
         const res = await Message.find({ recipientName: 'general' }).exec()
         io.to(socket.id).emit('room-joined', res)
     })
@@ -96,7 +97,6 @@ io.on('connection', (socket) => {
         io.emit('user-disconnected', users)
     })
 });
-
 
 // socket.on('delete-room', room => {
 //     const toDelete = rooms.findIndex(() => room)

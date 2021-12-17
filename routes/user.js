@@ -69,7 +69,6 @@ router.post("/login",
     ],
     async (req, res) => {
         const errors = validationResult(req);
-        console.log(errors)
         if (!errors.isEmpty()) {
             return res.status(400).json({
                 errorMessage: errors.errors[0].msg

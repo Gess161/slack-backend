@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const { mongoose } = require('../config/db');
 const moment = require('moment-timezone');
 const dateKyiv = () => moment.tz("Europe/Kiev").format()
 
@@ -24,7 +24,6 @@ const messageSchema = new mongoose.Schema({
     time: {
         type: String,
         default: dateKyiv
-
     }
 });
 const Message = mongoose.model("Message", messageSchema);
