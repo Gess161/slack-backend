@@ -143,41 +143,41 @@ router.post("/upload", upload.single('image'),
             user: user,
             img: "uploads\\profile-image.svg"
         };
-        // if (active === true) {
-        //     try {
-        //         if (password && confirmPassword && newPassword) {
-        //             const username = await User.findOne({ email });
-        //             if (password.length < 6 && newPassword.length < 6 && confirmPassword.length < 6) {
-        //                 return res.status(400).json({
-        //                     errorMessage: "Password must be at least 6 characters long"
-        //                 })
-        //             }
-        //             if (req.body.newPassword !== req.body.confirmPassword) {
-        //                 return res.status(400).json({
-        //                     errorMessage: "Passwords do not match"
-        //                 })
-        //             }
-        //             const isMatch = await bcrypt.compare(password, username.password);
-        //             if (!isMatch) {
-        //                 return res.status(204).send({
-        //                     errorMessage: 'You entered wrong password'
-        //                 })
-        //             }
-        //         } else {
-        //             return res.status(400).json({
-        //                 errorMessage: "Please enter valid password"
-        //             })
-        //         };
-        //         const salt = await bcrypt.genSalt(10);
-        //         data["password"] = await bcrypt.hash(newPassword, salt);
-        //     } catch (e) {
-        //         console.error(e);
-        //         res.status(500).json({
-        //             errorMessage: "Server error"
-        //         });
-        //     };
-        // }
-        const updatedUser = await User.updateMany({ username: data.previousname }, { passd: data.password, image: data.img, username: data.user, email: req.body.email });
+        if (active === true) {
+            try {
+                if (password && confirmPassword && newPassword) {
+                    const username = await User.findOne({ email });
+                    if (password.length < 6 && newPassword.length < 6 && confirmPassword.length < 6) {
+                        return res.status(400).json({
+                            errorMessage: "Password must be at least 6 characters long"
+                        })
+                    }
+                    if (req.body.newPassword !== req.body.confirmPassword) {
+                        return res.status(400).json({
+                            errorMessage: "Passwords do not match"
+                        })
+                    }
+                    const isMatch = await bcrypt.compare(password, username.password);
+                    if (!isMatch) {
+                        return res.status(204).send({
+                            errorMessage: 'You entered wrong password'
+                        })
+                    }
+                } else {
+                    return res.status(400).json({
+                        errorMessage: "Please enter valid password"
+                    })
+                };
+                const salt = await bcrypt.genSalt(10);
+                data["password"] = await bcrypt.hash(newPassword, salt);
+            } catch (e) {
+                console.error(e);
+                res.status(500).json({
+                    errorMessage: "Server error"
+                });
+            };
+        }
+        const updatedUser = await User.updateMany({ username: data.previousname }, { password: data.password, image: data.img, username: data.user, email: req.body.email });
         const sent = await Message.updateMany({ senderName: data.previousname }, { senderName: data.user });
         const recieved = await Message.updateMany({ recipientName: data.previousname }, { recipientName: data.user });
         return res.json(data)
